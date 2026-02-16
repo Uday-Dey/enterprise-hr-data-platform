@@ -3,4 +3,5 @@ __pycache__/
 *.db
 .env
 logs/
-data/warehouse/
+data/
+

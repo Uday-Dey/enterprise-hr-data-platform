@@ -1,12 +1,14 @@
 import duckdb
 import os
 
-DB_PATH = "data/warehouse/hr_analytics.duckdb"
-SCHEMA_FILE = "sql/create_schema.sql"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+DB_PATH = os.path.join(BASE_DIR, "data", "warehouse", "hr_analytics.duckdb")
+SCHEMA_FILE = os.path.join(BASE_DIR, "sql", "create_schema.sql")
 
 
 def initialize_database():
-    os.makedirs("data/warehouse", exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "data", "warehouse"), exist_ok=True)
 
     print("Connecting to DuckDB...")
     conn = duckdb.connect(DB_PATH)
