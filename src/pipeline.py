@@ -87,15 +87,53 @@ def run_pipeline(file_path):
     print("Processing data...")
     df = process_data(df, os.path.basename(file_path))
 
+    print("Fetching last processed timestamp...")
+    last_ts = get_last_processed_timestamp(conn)
+
+    if last_ts:
+        print(f"Filtering data after {last_ts}...")
+        df = df[df["source_updated_timestamp"] > last_ts]
+
+    if df.empty:
+        print("No new data to process.")
+        return
+
     print("Inserting into raw history...")
     insert_raw_history(conn, df)
 
     print("Upserting into current table...")
     upsert_current(conn, df)
 
+    max_ts = df["source_updated_timestamp"].max()
+    lineage_id = df["lineage_id"].iloc[0]
+
+    print("Updating metadata...")
+    update_metadata(conn, max_ts, len(df), lineage_id)
+
     print("Pipeline run complete.")
 
     conn.close()
+
+
+def get_last_processed_timestamp(conn):
+    result = conn.execute("""
+        SELECT MAX(last_processed_timestamp) FROM metadata_pipeline_tracker
+        WHERE pipeline_name = 'hr_pipeline'
+    """).fetchone()
+
+    return result[0] if result[0] else None
+
+
+def update_metadata(conn, max_timestamp, record_count, lineage_id):
+    conn.execute(f"""
+        INSERT INTO metadata_pipeline_tracker VALUES (
+            'hr_pipeline',
+            '{max_timestamp}',
+            CURRENT_TIMESTAMP,
+            {record_count},
+            '{lineage_id}'
+        )
+    """)
 
 
 if __name__ == "__main__":
