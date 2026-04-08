@@ -22,9 +22,17 @@ def load_csv(file_path):
 
 
 def process_data(df, file_name):
+    # Convert hire_date to proper format
+    df["hire_date"] = pd.to_datetime(df["hire_date"], dayfirst=True)
+
+    # Convert timestamp column properly
+    df["source_updated_timestamp"] = pd.to_datetime(df["source_updated_timestamp"], dayfirst=True)
+    
+    # Add metadata columns
     df["ingestion_timestamp"] = datetime.now()
     df["file_id"] = file_name
     df["lineage_id"] = generate_lineage_id()
+
     return df
 
 
